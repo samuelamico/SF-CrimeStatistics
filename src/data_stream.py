@@ -50,8 +50,10 @@ def run_spark_job(spark):
         .select("DF.*")
 
     # TODO select original_crime_type_name and disposition
+
+    # I prefer the spark scala version of $"column_name"
     distinct_table = service_table \
-        .select(psf.to_timestamp(psf.col("call_date_time")).alias("call_date_time"),
+        .select(psf.to_timestamp(psf.col("call_date_time")),
                 psf.col('original_crime_type_name'), 
                 psf.col('disposition'))
     
@@ -65,14 +67,12 @@ def run_spark_job(spark):
     #    .agg({'original_crime_type_name': 'count'})
     #    
     
+    # I prefer do not use this ===>>>>
     agg_df = distinct_table \
         .withWatermark("call_date_time", "60 minutes") \
-        .groupBy(
-            psf.window(distinct_table.call_date_time, "5 minutes", "1 minutes"),
-            psf.col('original_crime_type_name')
-    ) \
-    .count()
+        .groupBy(psf.window(distinct_table.call_date_time, "5 minutes", "1 minutes"),psf.col('original_crime_type_name')) .count()
 
+    # ================<<<<<<<<<<<
     # TODO Q1. Submit a screen shot of a batch ingestion of the aggregation
     # TODO write output stream
     query = agg_df \
@@ -96,7 +96,9 @@ def run_spark_job(spark):
     radio_code_df = radio_code_df.withColumnRenamed("disposition_code", "disposition")
 
     # TODO join on disposition column
-    join_query = agg_df.join(radio_code_df, col('agg_df.disposition') == col('radio_code_df.disposition'), 'left_outer')
+    # Remeber that some JOINS operations dosent exist
+    # join_query = agg_df.join(radio_code_df, col('agg_df.disposition') == col('radio_code_df.disposition'),'right_outer')
+    join_query = agg_df.join(radio_code_df, col('agg_df.disposition') == col('radio_code_df.disposition'))
     
     join_query_writer = join_query\
         .writeStream\
