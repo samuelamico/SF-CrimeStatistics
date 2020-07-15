@@ -1,7 +1,6 @@
 # Initialize every time the kafka and zookeeper server
 
 /usr/bin/zookeeper-server-start zookeeper.properties
-zookeeper-shell localhost:2181
 /usr/bin/kafka-server-start producer.properties
 
 # Install requirements using the provided ./start.sh script. 
